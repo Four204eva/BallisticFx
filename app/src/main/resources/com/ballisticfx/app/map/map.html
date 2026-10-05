@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1">
+<style>
+  html, body, #map { height: 100%; margin: 0; background: #1e2227; }
+  .pin {
+    width: 26px; height: 26px; line-height: 22px; text-align: center; border-radius: 50%;
+    border: 2px solid #fff; color: #fff; font: bold 13px sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,.6);
+  }
+  .pin-shooter { background: #1e88e5; }
+  .pin-target { background: #e53935; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  // Shared page state. Java drives it through place/clearPoint/setMode; the provider adapter (Google or
+  // Leaflet) draws it. Java injects window.bridge once the document exists.
+  var COLORS = { shooter: '#1e88e5', target: '#e53935' };
+  var pts = { shooter: null, target: null };
+  var mode = 'shooter';
+  var impl = null;          // set by initGoogle / initLeaflet; { render(fit) }
+  var pendingFailure = null;
+
+  function setMode(m) { mode = m; }
+  // From Java (typed coordinates, GPS, reload): bring the view to the points. render(fit) takes
+  // 'focus' (always frame the point(s)), 'outside' (only if a point left the view) or nothing.
+  function place(which, lat, lng) { pts[which] = { lat: lat, lng: lng }; if (impl) impl.render('focus'); }
+  function clearPoint(which) { pts[which] = null; if (impl) impl.render(null); }
+
+  // The user clicked or dragged: update local state, redraw, and tell Java. Never yank the view they chose,
+  // unless a marker would end up off-screen.
+  function userPlaced(which, lat, lng) {
+    pts[which] = { lat: lat, lng: lng };
+    if (impl) impl.render('outside');
+    if (window.bridge) window.bridge.onPoint(which, lat, lng);
+  }
+
+  // Provider failed (bad key, offline): Java switches to the OpenStreetMap fallback.
+  function fail(message) {
+    if (window.bridge) window.bridge.onProviderFailure(String(message));
+    else pendingFailure = String(message);
+  }
+  function flushFailure() {
+    if (pendingFailure && window.bridge) { var m = pendingFailure; pendingFailure = null; window.bridge.onProviderFailure(m); }
+  }
+
+  // Google calls this global when the key is invalid, restricted, or billing is off.
+  window.gm_authFailure = function () {
+    fail('Google Maps rejected the API key (check the key, that "Maps JavaScript API" is enabled, and that billing is on).');
+  };
+
+  // ---------- Google Maps ----------
+  function initGoogle() {
+    var map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 39.5, lng: -98.35 }, zoom: 4, mapTypeId: 'hybrid',
+      streetViewControl: false, fullscreenControl: false, clickableIcons: false, gestureHandling: 'greedy'
+    });
+    var markers = {};
+    var line = null;
+
+    // google.maps.Marker is deprecated (but still supported, with >= 12 months notice before removal).
+    // Marker creation is isolated here so a move to AdvancedMarkerElement touches only this function.
+    function makeMarker(which, position) {
+      var m = new google.maps.Marker({
+        map: map, position: position, draggable: true, title: which === 'shooter' ? 'Shooter' : 'Target',
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: COLORS[which], fillOpacity: 1,
+                strokeColor: '#ffffff', strokeWeight: 2 },
+        label: { text: which === 'shooter' ? 'S' : 'T', color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }
+      });
+      m.addListener('drag', function () {
+        var p = m.getPosition(); pts[which] = { lat: p.lat(), lng: p.lng() }; drawLine();
+      });
+      m.addListener('dragend', function () {
+        var p = m.getPosition(); userPlaced(which, p.lat(), p.lng());
+      });
+      return m;
+    }
+
+    function drawLine() {
+      if (!pts.shooter || !pts.target) { if (line) { line.setMap(null); line = null; } return; }
+      var path = [pts.shooter, pts.target];
+      if (!line) line = new google.maps.Polyline({ map: map, strokeColor: '#ffeb3b', strokeWeight: 2, strokeOpacity: 0.95 });
+      line.setPath(path);
+    }
+
+    impl = {
+      render: function (fit) {
+        ['shooter', 'target'].forEach(function (which) {
+          var p = pts[which];
+          if (!p) { if (markers[which]) { markers[which].setMap(null); delete markers[which]; } return; }
+          if (!markers[which]) markers[which] = makeMarker(which, p); else markers[which].setPosition(p);
+        });
+        drawLine();
+        if (!fit) return;
+        var have = ['shooter', 'target'].filter(function (w) { return pts[w]; });
+        if (have.length === 0) return;
+        var view = map.getBounds();
+        var inside = view && have.every(function (w) { return view.contains(pts[w]); });
+        if (fit === 'outside' && inside) return;
+        if (have.length === 2) {
+          var b = new google.maps.LatLngBounds();
+          have.forEach(function (w) { b.extend(pts[w]); });
+          map.fitBounds(b, 90);
+        } else {
+          map.setCenter(pts[have[0]]);
+          if (map.getZoom() < 15) map.setZoom(15);
+        }
+      }
+    };
+    map.addListener('click', function (e) { userPlaced(mode, e.latLng.lat(), e.latLng.lng()); });
+    impl.render('focus');
+  }
+
+  // ---------- Leaflet / OpenStreetMap fallback (no key, offline Google, or key rejected) ----------
+  function initLeaflet() {
+    if (typeof L === 'undefined') { fail('Could not load the OpenStreetMap library (offline?).'); return; }
+    // JavaFX's WebView is an old WebKit: Leaflet's CSS zoom/fade animations never finish there and leave the
+    // tile layer stuck half-scaled, so all animation is off. The zoom control moves to the bottom-right so the
+    // Java-side overlay (top of the map) never covers it.
+    var map = L.map('map', { zoomControl: false, zoomAnimation: false, fadeAnimation: false,
+                             markerZoomAnimation: false, inertia: false });
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    map.setView([39.5, -98.35], 4, { animate: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    var markers = {};
+    var line = null;
+
+    function icon(which) {
+      return L.divIcon({ className: '', html: '<div class="pin pin-' + which + '">' + (which === 'shooter' ? 'S' : 'T') + '</div>',
+                         iconSize: [26, 26], iconAnchor: [13, 13] });
+    }
+    function makeMarker(which, p) {
+      var m = L.marker([p.lat, p.lng], { draggable: true, icon: icon(which), title: which }).addTo(map);
+      m.on('drag', function () { var q = m.getLatLng(); pts[which] = { lat: q.lat, lng: q.lng }; drawLine(); });
+      m.on('dragend', function () { var q = m.getLatLng(); userPlaced(which, q.lat, q.lng); });
+      return m;
+    }
+    function drawLine() {
+      if (!pts.shooter || !pts.target) { if (line) { map.removeLayer(line); line = null; } return; }
+      var path = [[pts.shooter.lat, pts.shooter.lng], [pts.target.lat, pts.target.lng]];
+      if (!line) line = L.polyline(path, { color: '#ffeb3b', weight: 2 }).addTo(map); else line.setLatLngs(path);
+    }
+    impl = {
+      render: function (fit) {
+        ['shooter', 'target'].forEach(function (which) {
+          var p = pts[which];
+          if (!p) { if (markers[which]) { map.removeLayer(markers[which]); delete markers[which]; } return; }
+          if (!markers[which]) markers[which] = makeMarker(which, p); else markers[which].setLatLng([p.lat, p.lng]);
+        });
+        drawLine();
+        if (!fit) return;
+        var ll = ['shooter', 'target'].filter(function (w) { return pts[w]; })
+                                      .map(function (w) { return [pts[w].lat, pts[w].lng]; });
+        if (ll.length === 0) return;
+        var view = map.getBounds();
+        var inside = ll.every(function (c) { return view.contains(c); });
+        if (fit === 'outside' && inside) return;
+        if (ll.length === 2) map.fitBounds(L.latLngBounds(ll).pad(0.35), { animate: false, maxZoom: 18 });
+        else map.setView(ll[0], Math.max(map.getZoom(), 15), { animate: false });
+      }
+    };
+    map.on('click', function (e) { userPlaced(mode, e.latlng.lat, e.latlng.lng); });
+    impl.render('focus');
+  }
+</script>
+<!--PROVIDER-->
+</body>
+</html>

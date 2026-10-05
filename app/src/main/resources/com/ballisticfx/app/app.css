@@ -1,0 +1,107 @@
+/* BallisticFX stylesheet: light theme. */
+
+.root {
+    -bf-bg: #eef1f5;
+    -bf-card: #ffffff;
+    -bf-border: #d5dbe3;
+    -bf-text: #1d2733;
+    -bf-dim: #6b7785;
+    -bf-accent: #1e88e5;
+    -bf-accent-dark: #1565c0;
+    -bf-error: #c62828;
+    -bf-ok: #2e7d32;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 12.5px;
+    -fx-base: #f3f5f8;
+    -fx-background: -bf-bg;
+    -fx-text-fill: -bf-text;
+}
+
+.label { -fx-text-fill: -bf-text; }
+.dim { -fx-text-fill: -bf-dim; }
+.hint-text { -fx-text-fill: -bf-dim; -fx-font-size: 13px; }
+.error-text { -fx-text-fill: -bf-error; -fx-font-weight: bold; }
+.unit { -fx-text-fill: -bf-dim; -fx-font-size: 11.5px; }
+.subheading { -fx-font-weight: bold; -fx-text-fill: -bf-accent-dark; -fx-padding: 6 0 0 0; }
+
+/* ---- toolbar */
+.toolbar { -fx-background-color: #14202e; -fx-border-width: 0 0 1 0; -fx-border-color: #0c141d; }
+.toolbar .label { -fx-text-fill: #cfd8e3; }
+.toolbar .dim { -fx-text-fill: #8fa1b5; }
+.app-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white !important; }
+.toolbar .button {
+    -fx-background-color: #24364a; -fx-text-fill: #e8eef5; -fx-background-radius: 5; -fx-padding: 4 10 4 10;
+}
+.toolbar .button:hover { -fx-background-color: #2f4660; }
+.status { -fx-font-size: 12px; }
+.toolbar .status-ok { -fx-text-fill: #9fb3c8; }
+.toolbar .status-error { -fx-text-fill: #ff8a80; -fx-font-weight: bold; }
+
+.segmented { -fx-spacing: 0; }
+.segment {
+    -fx-background-color: #24364a; -fx-text-fill: #cfd8e3; -fx-background-radius: 0; -fx-padding: 4 12 4 12;
+    -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+}
+.segment:selected { -fx-background-color: -bf-accent; -fx-text-fill: white; -fx-font-weight: bold; }
+.segmented > .segment:first-child { -fx-background-radius: 5 0 0 5; }
+.segmented > .segment:last-child { -fx-background-radius: 0 5 5 0; }
+
+/* ---- input panel */
+.input-panel { -fx-background-color: -bf-bg; }
+.input-panel > .viewport { -fx-background-color: -bf-bg; }
+.titled-pane > .title { -fx-background-color: #dfe6ee; -fx-font-weight: bold; }
+.titled-pane > .content { -fx-background-color: -bf-card; -fx-border-color: -bf-border; }
+.text-field { -fx-background-radius: 4; -fx-border-radius: 4; -fx-border-color: #c2cbd6; -fx-background-color: white; }
+.text-field:focused { -fx-border-color: -bf-accent; }
+.text-field:disabled { -fx-opacity: 0.55; }
+.text-field.invalid { -fx-border-color: -bf-error; -fx-background-color: #fff4f4; }
+
+/* ---- map overlays */
+.map-overlay { -fx-background-color: rgba(20, 32, 46, 0.78); -fx-background-radius: 8; -fx-padding: 6 8 6 8; }
+.map-hint { -fx-text-fill: #e8eef5; -fx-font-size: 11.5px; }
+.map-badge {
+    -fx-background-color: rgba(20, 32, 46, 0.78); -fx-text-fill: #e8eef5; -fx-background-radius: 6;
+    -fx-padding: 3 8 3 8; -fx-font-size: 11px;
+}
+.pick-button {
+    -fx-background-color: rgba(255,255,255,0.16); -fx-text-fill: white; -fx-background-radius: 5; -fx-padding: 3 10 3 10;
+    -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+}
+.pick-shooter:selected { -fx-background-color: #1e88e5; -fx-font-weight: bold; }
+.pick-target:selected { -fx-background-color: #e53935; -fx-font-weight: bold; }
+
+/* ---- results */
+.banner { -fx-background-color: -bf-bg; }
+.card { -fx-background-color: -bf-card; -fx-background-radius: 8; -fx-border-color: -bf-border; -fx-border-radius: 8; }
+.dial-card { -fx-border-color: -bf-accent; -fx-border-width: 0 0 0 4; }
+.card-title { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: -bf-dim; }
+.big-number { -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: -bf-accent-dark; }
+.banner-message { -fx-font-size: 13px; }
+.tab-pane > .tab-header-area > .tab-header-background { -fx-background-color: -bf-bg; }
+.flat-scroll, .flat-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+
+.tile { -fx-background-color: -bf-card; -fx-background-radius: 6; -fx-border-color: -bf-border; -fx-border-radius: 6; -fx-padding: 6 10 6 10; }
+.tile-title { -fx-font-size: 10.5px; -fx-text-fill: -bf-dim; }
+.tile-value { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -bf-text; }
+.tile-value.supersonic { -fx-text-fill: -bf-ok; }
+.tile-value.subsonic { -fx-text-fill: #ef6c00; }
+.slider-time { -fx-font-family: "Consolas", monospace; -fx-font-size: 14px; -fx-font-weight: bold; }
+
+.table-view .column-header-background { -fx-background-color: #dfe6ee; }
+.table-view .table-row-cell:odd { -fx-background-color: #f7f9fb; }
+.table-view .table-row-cell.target-row { -fx-background-color: #bbdefb; }
+.table-view .table-row-cell.target-row .table-cell { -fx-text-fill: #0d47a1; -fx-font-weight: bold; }
+
+/* ---- charts. Series order: 0 = main line, 1 = reference line, 2 = slider marker, 3 = target marker */
+.chart-title { -fx-font-size: 12.5px; -fx-text-fill: -bf-dim; }
+.chart-series-line { -fx-stroke-width: 2.4px; }
+.default-color0.chart-series-line { -fx-stroke: #1e88e5; }
+.default-color1.chart-series-line { -fx-stroke: #8d99a8; -fx-stroke-dash-array: 6 5; -fx-stroke-width: 1.3px; }
+.default-color2.chart-series-line,
+.default-color3.chart-series-line { -fx-stroke: transparent; }
+.default-color0.chart-line-symbol,
+.default-color1.chart-line-symbol { -fx-background-color: transparent; -fx-padding: 0; }
+.default-color2.chart-line-symbol { -fx-background-color: #e53935, white; -fx-background-radius: 8px; -fx-padding: 5px; }
+.default-color3.chart-line-symbol { -fx-background-color: #2e7d32, white; -fx-background-radius: 2px; -fx-padding: 5px; }
+.speed-chart .default-color0.chart-series-line { -fx-stroke: #fb8c00; }
+.chart-plot-background { -fx-background-color: #fbfcfd; }

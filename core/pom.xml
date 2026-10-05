@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ballisticfx</groupId>
+        <artifactId>ballisticfx</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>ballisticfx-core</artifactId>
+    <name>BallisticFX Core</name>
+    <description>Pure-Java ballistics engine. No UI, no network, no third-party runtime dependencies, so it can be reused unchanged on Android.</description>
+
+    <properties>
+        <!-- Java 17 bytecode keeps the core consumable by Android (D8/R8) and Gluon builds. -->
+        <maven.compiler.release>17</maven.compiler.release>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
